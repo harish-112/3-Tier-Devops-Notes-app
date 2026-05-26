@@ -1,7 +1,3 @@
-Here is a complete, industry-grade `README.md` for your GitHub repository. It is written from a real-world engineering perspective, detailing the exact architecture, local development choices, and the DevOps automation pipeline you've built.
-
----
-
 # 📝 Multi-Tier DevOps Notes Application
 
 A production-ready, 3-tier containerized web application built to demonstrate modern cloud architecture, secure networking, persistent storage caching, and an automated continuous integration/continuous deployment (CI/CD) pipeline targeting an isolated Azure Virtual Machine.
@@ -10,12 +6,12 @@ A production-ready, 3-tier containerized web application built to demonstrate mo
 
 ## 🛠️ System Architecture
 
-The application is structured as a tightly decoupled microservices ecosystem running entirely within a custom internal Docker bridge network (`notesnet`). The only exposed doorways to the public internet are ports `80` and `443`.
+The application is structured as a tightly decoupled microservices ecosystem running entirely within a custom internal Docker bridge network (`notesnet`). The only exposed doorways to the public internet are ports `8080` and `8443`.
 
 ```
                   [ Public Internet ]
                            │
-                    Port 80 / 443 (TLS)
+                    Port 8080 / 8443 (TLS)
                            ▼
                  ┌───────────────────┐
                  │    Nginx Proxy    │
@@ -83,9 +79,7 @@ The entire system is governed by a secure GitHub Actions workflow (`.github/work
 * Triggers on both direct pushes to `main` and incoming `pull_request` commits.
 * Provisions an ephemeral `ubuntu-latest` VM.
 * Installs Python and Node runtimes with automatic package layer caching.
-* Injects an isolated, mock environment profile (`.env`) to isolate checks.
 * Executes full backend unit test configurations via `pytest` and runs style/syntax static validation with `ruff`.
-* Triggers a `Vite` compilation build test for the frontend to trap syntax/typing errors before anything proceeds to the build step.
 
 ### Phase 2: Secure Build & Push
 
@@ -102,51 +96,4 @@ The entire system is governed by a secure GitHub Actions workflow (`.github/work
 * Performs an incremental roll out of updated microservice containers while verifying live runtime indicators.
 * Runs a final integration smoke-test using local health endpoints (`/api/health`). If the container fails to start properly, the pipeline halts, streams the last 50 error log lines directly back to the GitHub panel interface, and marks the workflow as a failure to protect uptime.
 
----
 
-## 💻 Local Setup & Development
-
-To spin up this entire 3-tier architecture locally with persistent databases and hot-reloading configurations, follow these simple steps:
-
-### Prerequisites
-
-* Docker Desktop installed on your local machine.
-
-### Instructions
-
-1. **Clone the Repository:**
-```bash
-git clone https://github.com/your-username/notes-app.git
-cd notes-app
-
-```
-
-
-2. **Configure Local Environment Variables:**
-Create a local `.env` file in the root folder (this file is excluded from version control via `.gitignore`):
-```env
-POSTGRES_DB=notesdb
-POSTGRES_USER=notesuser
-POSTGRES_PASSWORD=localsecret123
-REDIS_PASSWORD=localredis456
-DATABASE_URL=postgresql://notesuser:localsecret123@postgres:5432/notesdb
-REDIS_URL=redis://:localredis456@redis:6379/0
-
-```
-
-
-3. **Boot the System:**
-```bash
-docker compose up -d --build
-
-```
-
-
-4. **Verify Setup:**
-* Open your browser to `http://localhost:3000` to view the frontend application interface.
-* Access the live FastAPI endpoint at `http://localhost:8000/health`.
-* Inspect container health statuses directly inside your terminal window:
-```bash
-docker compose ps
-
-```
