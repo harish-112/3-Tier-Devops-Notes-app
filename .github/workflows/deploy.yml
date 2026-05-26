@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip" # Caches packages so subsequent runs are much faster
+          cache: "pip" 
 
       - name: Install dependencies
         run: |
@@ -135,34 +135,26 @@ jobs:
           script: |
             set -euo pipefail
             cd ~/notes-app
-            
-            # 1. Log in to GHCR
             echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin
             
-            # 2. Inject the unique image tag
+            # Inject the unique image tag
             echo "IMAGE_TAG=${IMAGE_TAG}" >> .env
             
-            # 3. Pull down the fresh custom images
             docker compose pull frontend api
-            
-            # 4. START TARGETED DEPENDENCIES FIRST, THEN RESTART APPS
-            # This brings up postgres, redis, and nginx if they aren't running
             docker compose up -d postgres redis nginx
-            
-            # Now safely update your application services
             docker compose up -d --no-deps --remove-orphans api
             sleep 8
             docker compose up -d --no-deps --remove-orphans frontend
             
-            # 5. Live-reload Nginx routing rules safely
+            # Live-reload Nginx routing rules safely
             docker compose exec -T nginx nginx -s reload
        
-            # 6. Smoke Test (Validates successful HTTP 200 connection status)
+            #Smoke Test (Validates successful HTTP 200 connection status)
             STATUS_CODE=$(curl -o /dev/null -s -w "%{http_code}" -k https://localhost:8443/api/health)
             if [ "$STATUS_CODE" -ne 200 ]; then
-              echo "❌ Deployment failed health check! Received Status: $STATUS_CODE"
+              echo "Deployment failed health check! Received Status: $STATUS_CODE"
               docker compose logs --tail=50 api
               exit 1
             else
-              echo "✅ Smoke test passed cleanly with Status: $STATUS_CODE!"
+              echo "Smoke test passed cleanly with Status: $STATUS_CODE!"
             fi
