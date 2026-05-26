@@ -93,3 +93,67 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha, mode=max
 
+  deploy:
+    name: Deploy to Azure VM
+    runs-on: ubuntu-latest
+    needs: build-push
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: "https://${{ secrets.VM_HOST }}"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write .env file from secret
+        run: echo "${{ secrets.ENV_FILE_CONTENTS }}" > .env
+
+      - name: Copy project files to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml,.env,nginx/"
+          target: "~/notes-app"
+
+      - name: Execute Remote Deployment Script
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          IMAGE_TAG: ${{ needs.build-push.outputs.tag }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: IMAGE_TAG,GH_ACTOR,GH_TOKEN
+          script: |
+            set -euo pipefail
+            cd ~/notes-app
+            
+            # 1. Log in to GHCR on the VM using the short-lived GitHub token
+            echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin
+            
+            # 2. Inject the unique image tag into the local environment file
+            echo "IMAGE_TAG=${IMAGE_TAG}" >> .env
+            
+            # 3. Pull down the fresh images
+            docker compose pull frontend api
+            
+            # 4. Perform sequential rolling update
+            docker compose up -d --no-deps --remove-orphans api
+            sleep 8
+            docker compose up -d --no-deps --remove-orphans frontend
+            
+            # 5. Live-reload Nginx routing rules safely
+            docker compose exec -T nginx nginx -s reload
+            
+            # 6. Smoke Test: Stream logs and exit with failure if health check drops
+            curl -fsk https://localhost/api/health | grep -q '"status":"ok"' || { 
+              echo "❌ Deployment failed health check! Pulling API container diagnostics:"; 
+              docker compose logs --tail=50 api; 
+              exit 1; 
+            }
+
+  
