@@ -1,6 +1,6 @@
 # Multi-Tier DevOps Notes Application
 
-A production-ready, 3-tier containerized web application built to demonstrate modern cloud architecture, secure networking, persistent storage caching, and an automated continuous integration/continuous deployment (CI/CD) pipeline targeting an isolated Azure Virtual Machine.
+I built a production-ready, 3-tier containerized web application built to demonstrate modern cloud architecture, secure networking, persistent storage caching, and an automated continuous integration/continuous deployment (CI/CD) pipeline targeting an isolated Azure Virtual Machine.
 
 ---
 
