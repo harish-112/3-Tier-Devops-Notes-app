@@ -1,10 +1,10 @@
-# 📝 Multi-Tier DevOps Notes Application
+# Multi-Tier DevOps Notes Application
 
 A production-ready, 3-tier containerized web application built to demonstrate modern cloud architecture, secure networking, persistent storage caching, and an automated continuous integration/continuous deployment (CI/CD) pipeline targeting an isolated Azure Virtual Machine.
 
 ---
 
-## 🛠️ System Architecture
+## System Architecture
 
 The application is structured as a tightly decoupled microservices ecosystem running entirely within a custom internal Docker bridge network (`notesnet`). The only exposed doorways to the public internet are ports `8080` and `8443`.
 
@@ -43,7 +43,7 @@ The application is structured as a tightly decoupled microservices ecosystem run
 
 ---
 
-## 🚀 The DevOps Journey: Core Engineering & Challenges
+## The DevOps Journey: Core Engineering & Challenges
 
 Transitioning this application from local code into a resilient, automated production environment presented several critical DevOps challenges, which were solved using standard industry best practices.
 
@@ -70,7 +70,7 @@ Transitioning this application from local code into a resilient, automated produ
 
 ---
 
-## 🛠️ Automated CI/CD Pipeline
+## Automated CI/CD Pipeline
 
 The entire system is governed by a secure GitHub Actions workflow (`.github/workflows/deploy.yml`) structured into three distinct, linear phases:
 
