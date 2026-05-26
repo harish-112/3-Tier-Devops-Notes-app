@@ -132,16 +132,20 @@ jobs:
             set -euo pipefail
             cd ~/notes-app
             
-            # 1. Log in to GHCR on the VM using the short-lived GitHub token
+            # 1. Log in to GHCR
             echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin
             
-            # 2. Inject the unique image tag into the local environment file
+            # 2. Inject the unique image tag
             echo "IMAGE_TAG=${IMAGE_TAG}" >> .env
             
-            # 3. Pull down the fresh images
+            # 3. Pull down the fresh custom images
             docker compose pull frontend api
             
-            # 4. Perform sequential rolling update
+            # 4. START TARGETED DEPENDENCIES FIRST, THEN RESTART APPS
+            # This brings up postgres, redis, and nginx if they aren't running
+            docker compose up -d postgres redis nginx
+            
+            # Now safely update your application services
             docker compose up -d --no-deps --remove-orphans api
             sleep 8
             docker compose up -d --no-deps --remove-orphans frontend
@@ -149,11 +153,7 @@ jobs:
             # 5. Live-reload Nginx routing rules safely
             docker compose exec -T nginx nginx -s reload
             
-            # 6. Smoke Test: Stream logs and exit with failure if health check drops
-            curl -fsk https://localhost/api/health | grep -q '"status":"ok"' || { 
-              echo "❌ Deployment failed health check! Pulling API container diagnostics:"; 
-              docker compose logs --tail=50 api; 
-              exit 1; 
-            }
+            # 6. Smoke Test
+            curl -fsk https://localhost/api/health | grep -q '"status":"ok"' || { echo "❌ Deployment failed health check!"; docker compose logs --tail=50 api; exit 1; }
 
   
