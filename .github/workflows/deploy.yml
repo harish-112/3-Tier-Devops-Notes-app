@@ -154,5 +154,5 @@ jobs:
             docker compose exec -T nginx nginx -s reload
             
             # 6. Smoke Test
-            curl -fsk https://localhost/api/health | grep -i '"status"' | grep -qi 'ok' || { echo "❌ Deployment failed health check!"; docker compose logs --tail=50 api; exit 1; }
+            curl -fsk https://localhost/api/health | grep -i "status" | grep -qi "ok" || { echo "❌ Deployment failed health check!"; docker compose logs --tail=50 api; exit 1; }
   
